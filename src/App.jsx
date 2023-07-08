@@ -1,12 +1,14 @@
 import { useState } from "react";
 import "./App.css";
+import { Icon } from '@iconify/react';
+import confetti from "canvas-confetti";
 
 const TURNS = {
   X: "X",
   O: "O",
 };
 
-const WINER_COMBOS = [
+const winner_COMBOS = [
   [0, 1, 2],
   [3, 4, 5],
   [6, 7, 8],
@@ -34,10 +36,11 @@ const Square = ({ children, active, updateBoard, posicion }) => {
 function App() {
   const [board, setBoard] = useState(Array(9).fill(null));
   const [turno, setTurno] = useState(TURNS.X);
-  const [winer, setWiner] = useState(false);
+  const [winner, setWinner] = useState(null);
+  
 
   const checkWinner = (checkBoard) => {
-    for (const combos of WINER_COMBOS) {
+    for (const combos of winner_COMBOS) {
       const [a, b, c] = combos;
 
       if (
@@ -45,25 +48,32 @@ function App() {
         checkBoard[a] === checkBoard[b] &&
         checkBoard[a] === checkBoard[c]
       ) {
-        setWiner(true);
+        return checkBoard[a]
       }
     }
   };
 
   const updateBoard = (index) => {
     const newBoard = [...board];
-    if (newBoard[index] || winer) return;
+    if (newBoard[index] || winner) return;
     newBoard[index] = turno;
     setBoard(newBoard);
     const newTurn = turno === TURNS.X ? TURNS.O : TURNS.X;
     setTurno(newTurn);
-    checkWinner(newBoard);
+    const playerWinner = checkWinner(newBoard)
+    if (playerWinner != undefined) {
+      confetti()
+      setWinner(playerWinner)
+    }else if (newBoard.every((Square) => Square !== null)) {
+      setWinner(false)
+    }
   };
 
-  // const handleReset = () => {
-  //   setBoard(Array(9).fill(null));
-  //   setTurno(TURNS.X);
-  // };
+  const handleReset = () => {
+    setBoard(Array(9).fill(null));
+    setTurno(TURNS.X);
+    setWinner(null)
+  };
 
   return (
     <main className="board">
@@ -81,10 +91,14 @@ function App() {
         <Square active={turno === "X"}>{TURNS.X}</Square>
         <Square active={turno === "O"}>{TURNS.O}</Square>
       </section>
-      {winer === false ? null : (
+      {winner !== null &&  (
         <section className="winner">
           <div className="text">
-            <h2>{winer == false ? "Empate" : "Ganó"}</h2>
+            <h2>{winner == false ? "Empate" : "Ganó"}</h2>
+            <Square>{winner || <Icon icon="fluent-mdl2:unknown" />}</Square>
+            <footer>
+            <button onClick={handleReset}>Jugar de nuevo</button>
+          </footer>
           </div>
         </section>
       )}
